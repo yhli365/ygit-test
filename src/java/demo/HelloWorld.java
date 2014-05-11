@@ -15,6 +15,7 @@ public class HelloWorld {
 			System.out.println("env[" + (++i) + "]: " + e.getKey() + " = "
 					+ e.getValue());
 		}
+		System.out.println("--------------TEST");
 	}
 
 }
