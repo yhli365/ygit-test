@@ -1,0 +1,486 @@
+
+--Git Books: <Pro Git> http://git-scm.com/book/zh
+-----------------------------------------------------------
+>>>>>1. 起步
+*)1.3 起步 - Git 基础
+#文件的三种状态
+对于任何一个文件，在 Git 内都只有三种状态：已提交（committed），已修改（modified）和已暂存（staged）。已提交表示该文件已经被安全地保存在本地数据库中了；已修改表示修改了某个文件，但还没有提交保存；已暂存表示把已修改的文件放在下次提交时要保存的清单中。
+由此我们看到 Git 管理项目时，文件流转的三个工作区域：Git 的工作目录，暂存区域，以及本地仓库。
+
+*)1.5 起步 - 初次运行 Git 前的配置
+$ git config --help
+$ git help config
+$ git config --system (cat /etc/gitconfig)
+$ git config --global (cat ~/.gitconfig)
+$ git config (cat .git/config)
+
+$ git config --global user.name "yhli365"
+$ git config --global user.email yhli365@126.com
+$ git config --list
+$ git config user.email
+
+$ git config --global --unset user.name
+
+>>>>>2. Git 基础
+*)2.1 Git 基础 - 取得项目的 Git 仓库
+$ cd /Y/GitHub
+$ pwd
+$ ls -al
+
+#从现有仓库克隆
+$ git clone https://github.com/yhli365/ygit-test.git
+$ cd ygit-test
+$ git remote -v
+
+#在工作目录中初始化新仓库
+$ mkdir ygit-test2
+$ cd ygit-test2
+$ git init
+
+*)2.2 Git 基础 - 记录每次更新到仓库
+#忽略某些文件
+$ cat .gitignore
+*.[oa]
+*~
+
+#文件 .gitignore 的格式规范如下：
+所有空行或者以注释符号 ＃ 开头的行都会被 Git 忽略。
+可以使用标准的 glob 模式匹配。
+匹配模式最后跟反斜杠（/）说明要忽略的是目录。
+要忽略指定模式以外的文件或目录，可以在模式前加上惊叹号（!）取反。
+所谓的 glob 模式是指 shell 所使用的简化了的正则表达式。星号（*）匹配零个或多个任意字符；[abc] 匹配任何一个列在方括号中的字符（这个例子要么匹配一个 a，要么匹配一个 b，要么匹配一个 c）；问号（?）只匹配一个任意字符；如果在方括号中使用短划线分隔两个字符，表示所有在这两个字符范围内的都可以匹配（比如 [0-9] 表示匹配所有 0 到 9 的数字）
+
+#查看已暂存和未暂存的更新
+$ git status
+$ echo "Hello world" > README
+$ git add README
+$ git checkout -- README
+$ git commit -m 'initial project version'
+
+$ git status
+$ echo "Hello a1" > a1.txt
+$ echo "Hello bb" >> README
+$ git status
+$ git add a1.txt
+$ git add README
+$ git status
+$ echo "Hello cc" >> README
+$ git status
+$ git add README
+$ git status
+$ git commit -m 'add or edit file, show status'
+
+$ echo "Hello diff1" >> README
+$ git add README
+$ echo "Hello diff2" >> README
+$ git status
+$ git diff
+$ git diff --staged
+
+#提交更新
+$ git commit -m "Story 110: Show git diff command"
+
+#跳过使用暂存区域
+$ echo "Hello a2" > a2.txt
+$ git status
+$ git commit -am "Story 111: Show commit command"
+$ git status
+
+#移除文件
+$ git add a2.txt
+$ git commit -am "Story 112: git command: rm"
+$ ls -al
+$ git status
+
+$ git rm a2.txt
+$ ls -al
+$ git status
+
+$ git reset HEAD a2.txt
+$ git checkout -- a2.txt
+$ ls -al
+$ git status
+
+$ git rm --cached a2.txt
+$ ls -al
+$ git status
+$ rm a2.txt
+$ git status
+$ git commit -am "Story 112b: git command: rm"
+
+$ git rm log/\*.log
+
+#移动文件
+$ git mv a1.txt a1b.txt
+$ git status
+$ git commit -am "Story 113: git command: mv"
+
+*)2.3 Git 基础 - 查看提交历史
+#查看提交历史
+$ git log
+$ git log -p -2
+$ git log -U1 --word-diff
+$ git log --stat
+$ git log --pretty=oneline
+$ git log --pretty=format:"%h - %an, %ar : %s"
+$ git log --pretty=format:"%h %s" --graph
+$ git log --since=2.weeks
+$ git log --stat README
+
+#使用图形化工具查阅提交历史
+$ gitk
+
+*)2.4 Git 基础 - 撤消操作
+#修改最后一次提交
+$ git commit --amend
+$ git log --stat -2
+
+$ git commit -m 'initial commit'
+$ echo "Hello forgotten" > forgotten_file
+$ git add forgotten_file
+$ git commit --amend
+$ git status
+$ git log --stat -2
+
+#取消已经暂存的文件
+$ echo "Hello reset" >> README
+$ git add README
+$ git status
+$ git reset HEAD README
+$ git status
+
+#取消对文件的修改
+$ git status
+$ git checkout -- README
+$ git status
+
+*)2.5 Git 基础 - 远程仓库的使用
+#查看当前的远程库
+$ git remote -v
+
+#添加远程仓库
+$ git remote add ytest https://github.com/yhli365/ygit-test.git
+
+#从远程仓库抓取数据
+$ git fetch origin
+$ git status
+$ ls -al
+
+$ git branch --set-upstream-to=origin/master master
+$ git pull
+$ git status
+$ ls -al
+
+#推送数据到远程仓库
+$ git push origin master
+
+#查看远程仓库信息
+$ git remote show origin
+
+#远程仓库的删除和重命名
+$ git remote rename ytest origin
+$ git remote remove origin
+
+*)2.6 Git 基础 - 打标签
+#列显已有的标签
+$ git tag
+$ git tag -l 'v1.4.2.*'
+
+#含附注的标签
+$ git tag -a v1.1 -m 'my version 1.1'
+$ git tag
+$ git show v1.1
+
+#轻量级标签
+$ git tag v1.1-lw
+$ git tag
+$ git show v1.1-lw
+
+#签署标签
+$ git tag -s v1.5 -m 'my signed 1.5 tag'
+$ git show v1.5
+
+#验证标签
+$ git tag -v v1.5
+$ git tag -v v1.1
+
+#后期加注标签
+$ git log --pretty=oneline
+$ git tag -a v1.0 24ccc57 -m 'my version 1.0: history'
+$ git tag
+$ git tag -v v1.0
+
+#删除标签
+$ git tag -d v1.0
+$ git tag -a v1.0 f09f6049 -m 'my version 1.0: history'
+$ git show v1.0
+
+#分享标签
+$ git push origin v1.0
+$ git push origin --tags
+
+*)2.7 Git 基础 - 技巧和窍门
+#自动补全
+$ source ~/.git-completion.bash
+
+#Git 命令别名
+$ git config --global alias.co checkout
+$ git config --global alias.br branch
+$ git config --global alias.ci commit
+$ git config --global alias.st status
+
+$ git config --global alias.unstage 'reset HEAD --'
+$ git unstage fileA
+$ git reset HEAD fileA
+
+$ git config --global alias.last 'log -1 HEAD'
+$ git last
+
+$ git config --global alias.visual '!gitk'
+$ git visual
+
+$ git config --global --unset alias.visual
+$ git config --list
+
+>>>>>3. Git 分支
+*)3.1 Git 分支 - 何谓分支
+$ git branch testing
+
+$ git checkout testing
+$ echo "test branch" >> README
+$ git commit -a -m 'Story 3.1a: branch test'
+$ git status
+$ cat README
+
+$ git checkout master
+$ echo "test branch: master" >> README
+$ git commit -a -m 'Story 3.1a: branch master'
+$ git status
+$ cat README
+
+$ git branch
+$ git branch --list
+
+*)3.2 Git 分支 - 分支的新建与合并
+#分支的新建与切换
+$ git checkout -b iss53
+$ echo "branch: iss53" >> README
+$ git commit -a -m 'Story 3.2a: added a new footer [issue 53]'
+$ git status
+
+$ git checkout master
+$ git checkout -b hotfix
+$ git branch
+$ echo "branch: hotfix" >> README
+$ git commit -a -m 'Story 3.2b: fixed the broken email address'
+
+$ git checkout master
+$ git merge hotfix
+$ git log -2
+
+$ git branch -d hotfix
+$ git branch
+
+$ git checkout iss53
+$ echo "branch: iss53, m2" >> README
+$ git commit -a -m 'Story 3.2a: finished the new footer [issue 53]'
+$ git log -2
+$ cat README
+
+#分支的合并
+$ git checkout master
+$ git merge iss53
+
+#遇到冲突时的分支合并
+$ git status
+$ vim README [$ git mergetool]
+$ git add README
+$ git status
+$ git commit
+$ git status
+
+#删除不需要的分支
+$ git branch -d iss53
+
+*)3.3 Git 分支 - 分支的管理
+$ git branch
+$ git branch -v
+$ git branch --merged
+$ git branch --no-merged
+$ git branch -d testing
+
+$ git branch -D testing
+
+*)3.4 Git 分支 - 利用分支进行开发的工作流程
+请务必牢记这些分支全部都是本地分支，这一点很重要。当你在使用分支及合并的时候，一切都是在你自己的 Git 仓库中进行的 — 完全不涉及与服务器的交互。
+
+*)3.5 Git 分支 - 远程分支
+#推送本地分支
+$ git branch serverfix
+$ git push origin serverfix
+$ git branch
+
+#跟踪远程分支
+$ git checkout --track origin/serverfix
+@$ git checkout -b sf origin/serverfix
+$ git branch
+
+$ echo "branch: origin/serverfix" >> README
+$ git commit -a -m 'Story 3.5a: track origin/serverfix'
+$ git log -2
+$ git pull
+
+$ git config --global push.default simple
+$ git push
+@$ git push origin HEAD:serverfix
+$ git log -2
+
+#删除远程分支
+$ git push origin :serverfix
+
+*)3.6 Git 分支 - 分支的衍合
+把一个分支中的修改整合到另一个分支的办法有两种：merge 和 rebase
+一般我们使用衍合的目的，是想要得到一个能在远程分支上干净应用的补丁
+
+#基本的衍合操作
+$ git checkout -b experiment
+$ echo "branch: experiment, m1" >> README
+$ git commit -a -m 'Story 3.6a: branch: experiment, m1'
+$ echo "branch: experiment, m2" >> README
+$ git commit -a -m 'Story 3.6b: branch: experiment, m2'
+$ git status
+$ git log -3
+
+$ git checkout master
+$ echo "branch: master.rebase, m1" >> README
+$ git commit -a -m 'Story 3.6c: branch: master.rebase, m1'
+$ git status
+$ git log -3
+
+$ git checkout experiment
+$ git rebase master
+
+$ cat .git/rebase-apply/patch
+$ vim README
+$ git add README
+$ git rebase --continue [continue|skip|abort]
+
+$ git checkout master
+$ git status
+$ git log -p -3
+$ cat README
+$ git push
+
+#有趣的衍合
+$ git rebase --onto master server client
+
+$ git checkout master
+$ git merge client
+
+$ git rebase master server
+
+$ git checkout master
+$ git merge server
+
+$ git branch -d client
+$ git branch -d server
+
+#衍合的风险
+呃，奇妙的衍合也并非完美无缺，要用它得遵守一条准则：
+一旦分支中的提交对象发布到公共仓库，就千万不要对该分支进行衍合操作
+
+在进行衍合的时候，实际上抛弃了一些现存的提交对象而创造了一些类似但不同的新的提交对象。如果你把原来分支中的提交对象发布出去，并且其他人更新下载后在其基础上开展工作，而稍后你又用 git rebase 抛弃这些提交对象，把新的重演后的提交对象发布出去的话，你的合作者就不得不重新合并他们的工作，这样当你再次从他们那里获取内容时，提交历史就会变得一团糟。
+
+如果把衍合当成一种在推送之前清理提交历史的手段，而且仅仅衍合那些尚未公开的提交对象，就没问题。如果衍合那些已经公开的提交对象，并且已经有人基于这些提交对象开展了后续开发工作的话，就会出现叫人沮丧的麻烦。
+
+>>>>>4. 服务器上的 Git
+*)4.1 服务器上的 Git - 协议
+Git 可以使用四种主要的协议来传输数据：本地传输，SSH 协议，Git 协议和 HTTP 协议。
+值得注意的是，除了 HTTP 协议外，其他所有协议都要求在服务器端安装并运行 Git。
+
+#本地协议
+$ git clone /opt/git/project.git
+$ git clone file:///opt/git/project.git
+$ git remote add local_proj /opt/git/project.git
+
+#SSH 协议
+$ git clone ssh://user@server/project.git
+$ git clone user@server:project.git
+
+#Git 协议
+
+#HTTP/S 协议
+$ cd /var/www/htdocs/
+$ git clone --bare /path/to/git_project gitproject.git
+$ cd gitproject.git
+$ mv hooks/post-update.sample hooks/post-update
+$ chmod a+x hooks/post-update
+
+$ git clone http://example.com/gitproject.git
+
+*)4.2 服务器上的 Git - 在服务器上部署 Git
+#在服务器上部署 Git
+$ git clone --bare my_project my_project.git
+
+#把裸仓库移到服务器上
+$ scp -r my_project.git user@git.example.com:/opt/git
+
+$ git clone user@git.example.com:/opt/git/my_project.git
+
+$ ssh user@git.example.com
+$ cd /opt/git/my_project.git
+$ git init --bare --shared
+
+#小型安装
+架设Git服务最复杂的地方在于账户管理。如果需要仓库对特定的用户可读，而给另一部分用户读写权限，那么访问和许可的安排就比较困难。
+
+第二个办法是在主机上建立一个 git 账户，让每个需要写权限的人发送一个 SSH 公钥，然后将其加入 git 账户的 ~/.ssh/authorized_keys 文件。
+
+*)4.3 服务器上的 Git - 生成 SSH 公钥
+#生成 SSH 公钥
+
+#Step 1: Check for SSH keys
+大多数 Git 服务器都会选择使用 SSH 公钥来进行授权。
+$ cd ~/.ssh
+$ ls
+关键是看有没有用 something 和 something.pub 来命名的一对文件，这个 something 通常就是 id_dsa 或 id_rsa。有 .pub 后缀的文件就是公钥，另一个文件则是密钥。假如没有这些文件，或者干脆连 .ssh 目录都没有，可以用 ssh-keygen 来创建。该程序在 Linux/Mac 系统上由 SSH 包提供，而在 Windows 上则包含在 MSysGit 包里：
+
+#Step 2: Generate a new SSH key
+$ ssh-keygen -t rsa -C "your_email@example.com"
+passphrase: sky1****5
+$ cat ~/.ssh/id_rsa.pub
+关于在多个操作系统上设立相同 SSH 公钥的教程，可以查阅 GitHub 上有关 SSH 公钥的向导：http://github.com/guides/providing-your-ssh-key。
+
+Then add your new key to the ssh-agent:
+# start the ssh-agent in the background
+$ eval `ssh-agent -s`
+Agent pid 59566
+$ ssh-add ~/.ssh/id_rsa
+
+#Step 3: Add your SSH key to GitHub
+$ clip < ~/.ssh/id_rsa.pub
+Account settings / SSH Keys
+
+#Step 4: Test everything out
+$ ssh -T git@github.com
+
+*)4.4 服务器上的 Git - 架设服务器
+#架设服务器
+本例将使用 authorized_keys 方法来给用户授权。
+$ sudo adduser git
+$ su git
+$ cd
+$ mkdir .ssh
+
+
+
+
+
+
+
+
+
+
+
+
+
