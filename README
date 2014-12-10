@@ -1,0 +1,14 @@
+Hello world
+Hello bb
+Hello cc
+Hello dd
+Hello diff1
+Hello diff2
+test branch: master
+branch: hotfix
+branch: iss53
+branch: iss53, m2
+branch: master.rebase, m1
+branch: origin/serverfix
+branch: experiment, m1
+branch: experiment, m2
