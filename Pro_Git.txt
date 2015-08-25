@@ -464,13 +464,286 @@ Account settings / SSH Keys
 #Step 4: Test everything out
 $ ssh -T git@github.com
 
+
 *)4.4 服务器上的 Git - 架设服务器
 #架设服务器
 本例将使用 authorized_keys 方法来给用户授权。
+
+#创建一个名为 'git' 的用户，并为其创建一个 .ssh 目录
 $ sudo adduser git
 $ su git
 $ cd
 $ mkdir .ssh
+
+#把开发者的 SSH 公钥添加到这个用户的 authorized_keys 文件中。
+$ cat /tmp/id_rsa.john.pub >> ~/.ssh/authorized_keys
+$ cat /tmp/id_rsa.josie.pub >> ~/.ssh/authorized_keys
+$ cat /tmp/id_rsa.jessica.pub >> ~/.ssh/authorized_keys
+
+#现在可以用 --bare 选项运行 git init 来建立一个裸仓库，这会初始化一个不包含工作目录的仓库。
+$ cd /opt/git
+$ mkdir project.git
+$ cd project.git
+$ git --bare init
+
+#这时，Join，Josie或者Jessica就可以把它加为远程仓库，推送一个分支，从而把第一个版本的项目文件上传到仓库里了。值得注意的是，每次添加一个新项目都需要通过 shell 登入主机并创建一个裸仓库目录。
+# 在 John 的电脑上
+$ cd myproject
+$ git init
+$ git add .
+$ git commit -m 'initial commit'
+$ git remote add origin git@gitserver:/opt/git/project.git
+$ git push origin master
+
+#这样，其他人的克隆和推送也一样变得很简单：
+$ git clone git@gitserver:/opt/git/project.git
+$ cd project
+$ vim README
+$ git commit -am 'fix for the README file'
+$ git push origin master
+
+#用这个方法可以很快捷地为少数几个开发者架设一个可读写的 Git 服务。
+#作为一个额外的防范措施，你可以用 Git 自带的 git-shell 工具限制 git 用户的活动范围。
+$ sudo vim /etc/passwd
+在文件末尾，你应该能找到类似这样的行：
+git:x:1000:1000::/home/git:/bin/sh
+把 bin/sh 改为 /usr/bin/git-shell （或者用 which git-shell 查看它的实际安装路径）。该行修改后的样子如下：
+git:x:1000:1000::/home/git:/usr/bin/git-shell
+现在 git 用户只能用 SSH 连接来推送和获取 Git 仓库，而不能直接使用主机 shell。尝试普通 SSH 登录的话，会看到下面这样的拒绝信息：
+$ ssh git@gitserver
+fatal: What do you think I am? A shell?
+Connection to gitserver closed.
+
+*)4.5 服务器上的 Git - 公共访问
+匿名的读取权限该怎么实现呢？或许对小型的配置来说最简单的办法就是运行一个静态 web 服务，把它的根目录设定为 Git 仓库所在的位置，然后开启本章第一节提到的 post-update 挂钩。
+*)4.6 服务器上的 Git - GitWeb
+Git 自带一个叫做 GitWeb 的 CGI 脚本，运行效果可以到 http://git.kernel.org 这样的站点体验下。
+*)4.7 服务器上的 Git - Gitosis
+简单地说，Gitosis就是一套用来管理authorized_keys文件和实现简单连接限制的脚本。有趣的是，用来添加用户和设定权限的并非通过网页程序，而只是管理一个特殊Git仓库。你只需要在这个特殊仓库内做好相应的设定，然后推送到服务器上，Gitosis 就会随之改变运行策略，听起来就很酷，对吧？
+*)4.8 服务器上的 Git - Gitolite
+Gitolite是在Git之上的一个授权层，依托sshd或者httpd来进行认证。（概括：认证是确定用户是谁，授权是决定该用户是否被允许做他想做的事情）。
+Gitolite允许你定义访问许可而不只作用于仓库，而同样于仓库中的每个branch和tag name。你可以定义确切的人(或一组人)只能push特定的"refs"(或者branches或者tags)而不是其他人。
+*)4.9 服务器上的 Git - Git 守护进程
+对于提供公共的，非授权的只读访问，我们可以抛弃 HTTP 协议，改用 Git 自己的协议，这主要是出于性能和速度的考虑。Git 协议远比 HTTP 协议高效，因而访问速度也快，所以它能节省很多用户的时间。
+$ git daemon --reuseaddr --base-path=/opt/git/ /opt/git/
+*)4.10 服务器上的 Git - Git 托管服务
+https://git.wiki.kernel.org/index.php/GitHosting
+
+
+>>>>>5. 分布式 Git
+*)5.1 分布式 Git - 分布式工作流程
+*)5.2 分布式 Git - 为项目作贡献
+*)5.3 分布式 Git - 项目的管理
+#决断代码取舍
+#一般我们会先看下，特性分支上都有哪些新增的提交。
+$ git log contrib --not master
+
+#如果想看当前分支同其他分支合并时的完整内容差异，有个小窍门：
+$ git diff master
+虽然能得到差异内容，但请记住，结果有可能和我们的预期不同。
+
+#我们可以手工定位它们的共同祖先，然后与之比较：
+$ git merge-base contrib master
+36c7dba2c95e6bbb78dfa822519ecfec6e1ca649
+$ git diff 36c7db
+
+#对于 diff 命令，可以把 ... 加在原始分支（拥有共同祖先）和当前分支之间：
+$ git diff master...contrib
+
+#挑拣（cherry-pick）
+$ git cherry-pick e43a6fd3e94888d76779ad79fb568ed180e5fcdf
+
+#生成内部版本号
+$ git describe master
+
+#准备发布
+$ git archive master --prefix='project/' | gzip > `git describe master`.tar.gz
+$ ls *.tar.gz
+
+#制作简报
+$ git shortlog --no-merges master --not v1.0
+
+
+>>>>>6. Git 工具
+*)6.1 Git 工具 - 修订版本（Revision）选择
+--#单个修订版本
+$ git log
+$ git log --abbrev-commit --pretty=oneline
+
+$ git show 1c002dd4b536e7479fe34593e72e6c6c1819e53b
+$ git show 1c002dd4b536e7479f
+$ git show 1c002d
+
+#分支引用
+$ git show topic1
+$ git rev-parse topic1
+
+#引用日志里的简称
+$ git reflog
+
+$ git show HEAD@{5}
+$ git show master@{yesterday}
+$ git show HEAD@{2.months.ago}
+
+$ git log -g master
+
+#祖先引用
+$ git log --pretty=format:'%h %s' --graph
+
+$ git show HEAD^
+$ git show d921970^
+$ git show d921970^2
+
+$ git show HEAD~
+$ git show HEAD~3
+$ git show HEAD^^^
+
+$ git show HEAD~3^2
+
+--#提交范围
+#双点
+$ git log master..experiment
+$ git log experiment..master
+
+$ git log origin/master..HEAD
+$ git log origin/master..
+
+#多点
+使用^字符或者--not指明你不希望提交被包含其中的分支。因此下面三个命令是等同的：
+$ git log refA..refB
+$ git log ^refA refB
+$ git log refB --not refA
+
+查找所有从refA或refB包含的但是不被refC包含的提交
+$ git log refA refB ^refC
+$ git log refA refB --not refC
+
+#三点
+$ git log master...experiment
+$ git log --left-right master...experiment
+
+
+*)6.2 Git 工具 - 交互式暂存
+$ git add -i
+$ git add -p
+
+*)6.3 Git 工具 - 储藏（Stashing）
+$ git status
+$ git stash
+$ git stash list
+$ git stash apply stash@{2}
+$ git stash apply --index
+$ git stash drop stash@{0}
+
+#取消储藏(Un-applying a Stash)
+$ git stash show -p stash@{0} | git apply -R
+$ git stash show -p | git apply -R
+
+#从储藏中创建分支
+$ git stash branch testchanges
+
+*)6.4 Git 工具 - 重写历史
+#改变最近一次提交
+$ git commit --amend
+
+#修改多个提交说明
+$ git rebase -i HEAD~3
+$ git commit --amend
+$ git rebase --continue
+
+#重排提交
+你也可以使用交互式的衍合来彻底重排或删除提交。
+
+#压制(Squashing)提交
+交互式的衍合工具还可以将一系列提交压制为单一提交。
+
+#拆分提交
+拆分提交就是撤销一次提交，然后多次部分地暂存或提交直到结束。
+$ git reset HEAD^
+$ git add README
+$ git commit -m 'updated README formatting'
+$ git add lib/simplegit.rb
+$ git commit -m 'added blame'
+$ git rebase --continue
+
+#核弹级选项: filter-branch
+从所有提交中删除一个文件
+$ git filter-branch --tree-filter 'rm -f passwords.txt' HEAD
+$ git filter-branch --tree-filter "find * -type f -name '*~' -delete" HEAD
+
+将一个子目录设置为新的根目录
+$ git filter-branch --subdirectory-filter trunk HEAD
+
+全局性地更换电子邮件地址
+$ git filter-branch --commit-filter '
+        if [ "$GIT_AUTHOR_EMAIL" = "schacon@localhost" ];
+        then
+                GIT_AUTHOR_NAME="Scott Chacon";
+                GIT_AUTHOR_EMAIL="schacon@example.com";
+                git commit-tree "$@";
+        else
+                git commit-tree "$@";
+        fi' HEAD
+
+
+*)6.5 Git 工具 - 使用 Git 调试
+#文件标注
+$ git blame -L 12,22 simplegit.rb
+$ git blame -C -L 141,153 GITPackUpload.m
+
+#二分查找
+$ git bisect start
+$ git bisect bad
+$ git bisect good v1.0
+$ git bisect reset
+
+$ git bisect start HEAD v1.0
+$ git bisect run test-error.sh
+
+*)6.6 Git 工具 - 子模块
+$ git submodule add git://github.com/chneukirchen/rack.git rack
+$ cat .gitmodules
+
+$ git clone git://github.com/schacon/myproject.git
+$ git submodule init
+$ git submodule update
+
+>>>>>7. 自定义 Git
+*)7.1 自定义 Git - 配置 Git
+#配置 Git	
+$ git config --global user.name "John Doe"
+$ git config --global user.email johndoe@example.com	
+
+#客户端基本配置		
+$ git config --global core.editor emacs		
+
+$ git config --global commit.template $HOME/.gitmessage.txt
+$ git commit
+
+$ git config --global core.pager 'less'
+		
+$ git config --global user.signingkey <gpg-key-id>
+$ git tag -s <tag-name>
+
+core.excludesfile
+help.autocorrect
+
+#Git中的着色
+$ git config --global color.ui true
+
+#外部的合并与比较工具
+下载P4Merge（译注：Perforce图形化合并工具）：
+http://www.perforce.com/perforce/downloads/component.html
+
+#格式化与空白
+$ git config --global core.autocrlf true	
+		
+		
+		
+
+
+
+
 
 
 
