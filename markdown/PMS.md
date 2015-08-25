@@ -22,9 +22,9 @@ Git
 
 - 上传代码
 
-	$ git add .
-	$ git commit -m "HiBench-4.0.zip"
-	$ git push
+	> git add .  
+	> git commit -m "HiBench-4.0.zip"
+	> git push
 	
 - 标签
 
