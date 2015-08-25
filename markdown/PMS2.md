@@ -2,9 +2,8 @@
 ====================
 - 复制HiBench项目代码用于学习。
 - https://github.com/intel-hadoop/HiBench.git
-
-## Tags ##
-- HiBench-4.0.zip
+- Tags
+    * HiBench-4.0.zip
 
 Git
 ====================
