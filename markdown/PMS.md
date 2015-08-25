@@ -15,21 +15,18 @@ Git
 ## 同步HiBench版本
 
 - 切换到主分支
-
-	$ git checkout master
+	`git checkout master`
 	
 - 解压HiBench-4.0.zip
 
 - 上传代码
-
 	> git add .  
 	> git commit -m "HiBench-4.0.zip"
 	> git push
 	
 - 标签
-
-    $ git tag -a HiBench-4.0 -m 'HiBench 4.0'
-    $ git push origin --tags
+	`git tag -a HiBench-4.0 -m 'HiBench 4.0'
+	git push origin --tags`
 
 ## 创建HiBench版本本地分支
 
