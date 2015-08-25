@@ -28,8 +28,8 @@ Git
 	
 - 标签
 
-	git tag -a HiBench-4.0 -m 'HiBench 4.0'
-	git push origin --tags
+        git tag -a HiBench-4.0 -m 'HiBench 4.0'
+        git push origin --tags
 
 ## 创建HiBench版本本地分支
 
